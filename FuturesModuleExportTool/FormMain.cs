@@ -194,7 +194,7 @@ namespace FuturesModuleExportTool
                     logAppendTextLine(sb.ToString());
                 }
                 //导出原始数据
-                new ExcelExport().exportExcel(tempStr);
+                //new ExcelExport().exportExcel(tempStr);
 
                 //for export excel，去掉最后一行合计
                 if (rows > 0)

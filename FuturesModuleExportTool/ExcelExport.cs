@@ -30,18 +30,19 @@ namespace FuturesModuleExportTool
             file.Close();
         }
 
-
         private ICellStyle commonStyle;
         private ICellStyle dateStyle;
         private ICellStyle profitLossStyle;
         private ICellStyle profitStyle;
-        private ICellStyle lossStyle;
         private ICellStyle holdErrorStyle;
         private ICellStyle commonNumberStyle;
         private ICellStyle titleStyle0;
         private ICellStyle titleStyle1;
         private ICellStyle titleStyle2;
         private ICellStyle titleStyle3;
+        private ICellStyle titleStyle4;
+
+        private HSSFPalette palette;
 
         private void initStyle(HSSFWorkbook workbook)
         {
@@ -49,7 +50,6 @@ namespace FuturesModuleExportTool
             dateStyle = createDateStyle(workbook);
             profitLossStyle = createProfitLossStyle(workbook);
             profitStyle = createProfitStyle(workbook);
-            lossStyle = createLossStyle(workbook);
             holdErrorStyle = createHoldErrorStyle(workbook);
             commonNumberStyle = createCommonNumberStyle(workbook);
 
@@ -57,14 +57,18 @@ namespace FuturesModuleExportTool
             titleStyle1 = createTitleStyle(workbook, 1);
             titleStyle2 = createTitleStyle(workbook, 2);
             titleStyle3 = createTitleStyle(workbook, 3);
+            titleStyle4 = createTitleStyle(workbook, 4);
         }
 
 
         public void exportExcel(List<string[,]> data, string dirName)
         {
             HSSFWorkbook workbook = new HSSFWorkbook();
+            palette = workbook.GetCustomPalette();
+            initColor();
             initStyle(workbook);
             HSSFSheet sheet = (HSSFSheet)workbook.CreateSheet("Sheet1");
+
 
             setColumnWidth(sheet);
 
@@ -114,7 +118,7 @@ namespace FuturesModuleExportTool
             for (int i = 0; i < data.Count; i++)
             {
                 ICellStyle style;
-                switch (i % 4)
+                switch (i % 5)
                 {
                     case 0:
                         style = titleStyle0;
@@ -127,6 +131,9 @@ namespace FuturesModuleExportTool
                         break;
                     case 3:
                         style = titleStyle3;
+                        break;
+                    case 4:
+                        style = titleStyle4;
                         break;
                     default:
                         style = commonStyle;
@@ -147,14 +154,20 @@ namespace FuturesModuleExportTool
                     bool isInt = Utils.convertToInt(partitionData[j, 17], out result);
                     if (isInt)
                     {
-                        cell.SetCellValue(result);
+
                         if (result > 0)
                         {
+                            cell.SetCellValue(result);
                             cell.CellStyle = profitStyle;
+                        }
+                        else if (result < 0)
+                        {
+                            cell.SetCellValue(result);
+                            cell.CellStyle = commonNumberStyle;
                         }
                         else
                         {
-                            cell.CellStyle = commonNumberStyle;
+                            //result == 0
                         }
                     }
                     //有效信号书
@@ -162,7 +175,10 @@ namespace FuturesModuleExportTool
                     isInt = Utils.convertToInt(partitionData[j, 19], out result);
                     if (isInt)
                     {
-                        cell.SetCellValue(result);
+                        if (result != 0)
+                        {
+                            cell.SetCellValue(result);
+                        }
                     }
                     cell.CellStyle = commonStyle;
                     //浮动盈亏
@@ -170,14 +186,26 @@ namespace FuturesModuleExportTool
                     isInt = Utils.convertToInt(partitionData[j, 18], out result);
                     if (isInt)
                     {
-                        cell.SetCellValue(result);
+
                         if (result > 0)
                         {
+                            cell.SetCellValue(result);
                             cell.CellStyle = profitStyle;
+                        }
+                        else if (result < 0)
+                        {
+                            cell.SetCellValue(result);
+                            cell.CellStyle = commonNumberStyle;
                         }
                         else
                         {
-                            cell.CellStyle = commonNumberStyle;
+                            // result == 0
+                            string subaccountHoldx = partitionData[j, 13];
+                            if (!string.IsNullOrEmpty(subaccountHoldx))
+                            {
+                                cell.SetCellValue(0);
+                                cell.CellStyle = commonNumberStyle;
+                            }
                         }
                     }
 
@@ -187,35 +215,41 @@ namespace FuturesModuleExportTool
                     bool holdError = false;
                     string subaccountHold = partitionData[j, 13];
                     string theoryHold = partitionData[j, 14];
-                    if (string.IsNullOrEmpty(subaccountHold))
+                    string signalPerform = partitionData[j, 9];
+                    if (!string.IsNullOrEmpty(signalPerform) && signalPerform.Contains("正在执行"))
                     {
-                        if (string.IsNullOrEmpty(theoryHold))
+                        Console.WriteLine("正在执行");
+                        holdError = true;
+                    }
+                    else
+                    {
+                        if (string.IsNullOrEmpty(subaccountHold))
                         {
                             holdError = false;
                         }
                         else
                         {
-                            holdError = true;
-                        }
-                    }
-                    else
-                    {
-                        if (string.IsNullOrEmpty(theoryHold))
-                        {
-                            holdError = true;
-                        }
-                        else
-                        {
-                            if (subaccountHold.Contains(theoryHold))
+                            if (string.IsNullOrEmpty(theoryHold))
                             {
-                                //空 1/1
-                                if (subaccountHold.Length > 2 && subaccountHold.Contains("/"))
+                                holdError = false;
+                            }
+                            else
+                            {
+                                if (subaccountHold.Contains(theoryHold))
                                 {
-                                    string temp = subaccountHold.Substring(2);
-                                    string[] tempArray = temp.Split('/');
-                                    if (tempArray.Length >= 2 && tempArray[0].Equals(tempArray[1]))
+                                    //空 1/1
+                                    if (subaccountHold.Length > 2 && subaccountHold.Contains("/"))
                                     {
-                                        holdError = false;
+                                        string temp = subaccountHold.Substring(2);
+                                        string[] tempArray = temp.Split('/');
+                                        if (tempArray.Length >= 2 && tempArray[0].Equals(tempArray[1]))
+                                        {
+                                            holdError = false;
+                                        }
+                                        else
+                                        {
+                                            holdError = true;
+                                        }
                                     }
                                     else
                                     {
@@ -224,12 +258,34 @@ namespace FuturesModuleExportTool
                                 }
                                 else
                                 {
-                                    holdError = true;
+                                    if (subaccountHold.Length > 2 && subaccountHold.Contains("/"))
+                                    {
+                                        string temp = subaccountHold.Substring(2);
+                                        string[] tempArray = temp.Split('/');
+                                        if (tempArray.Length >= 2 && tempArray[0].Equals(tempArray[1]))
+                                        {
+                                            // 看动态
+                                            string dynamic = partitionData[j, 6];
+                                            Console.WriteLine(dynamic);
+                                            if (string.IsNullOrEmpty(dynamic))
+                                            {
+                                                holdError = true;
+                                            }
+                                            else
+                                            {
+                                                holdError = false;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            holdError = true;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        holdError = true;
+                                    }
                                 }
-                            }
-                            else
-                            {
-                                holdError = true;
                             }
                         }
                     }
@@ -252,7 +308,10 @@ namespace FuturesModuleExportTool
                     isInt = Utils.convertToInt(partitionData[j, 21], out result);
                     if (isInt)
                     {
-                        cell.SetCellValue(result);
+                        if (result != 0)
+                        {
+                            cell.SetCellValue(result);
+                        }
                     }
                     cell.CellStyle = commonStyle;
                     //end
@@ -264,6 +323,24 @@ namespace FuturesModuleExportTool
             FileStream file = new FileStream(filePath, FileMode.Create);
             workbook.Write(file);
             file.Close();
+        }
+
+        private void initColor()
+        {
+            //8 黑
+            palette.SetColorAtIndex(8, 0, 0, 0);
+            //9 红
+            palette.SetColorAtIndex(9, 255, 0, 0);
+            //10 蓝
+            palette.SetColorAtIndex(10, 0, 0, 255);
+            //11 黄
+            palette.SetColorAtIndex(11, 255, 255, 0);
+            //12 深红
+            palette.SetColorAtIndex(12, 192, 0, 0);
+            // 13 青
+            palette.SetColorAtIndex(13, 84, 130, 53);
+            // 14 粉
+            palette.SetColorAtIndex(14, 255, 0, 255);
         }
 
 
@@ -299,7 +376,7 @@ namespace FuturesModuleExportTool
             style.Alignment = HorizontalAlignment.Center;
             style.WrapText = false;
             IFont font = workbook.CreateFont();
-            font.Color = IndexedColors.Blue.Index;
+            font.Color = 10;
             font.FontHeightInPoints = 11;
             font.FontName = "宋体";
             style.SetFont(font);
@@ -312,7 +389,7 @@ namespace FuturesModuleExportTool
             style.Alignment = HorizontalAlignment.Center;
             style.WrapText = false;
             IFont font = workbook.CreateFont();
-            font.Color = IndexedColors.Red.Index;
+            font.Color = 9;
             font.FontHeightInPoints = 11;
             font.FontName = "宋体";
             style.SetFont(font);
@@ -328,16 +405,19 @@ namespace FuturesModuleExportTool
             switch (index)
             {
                 case 0:
-                    font.Color = IndexedColors.Aqua.Index;
+                    font.Color = 12;
                     break;
                 case 1:
-                    font.Color = IndexedColors.Pink.Index;
+                    font.Color = 10;
                     break;
                 case 2:
-                    font.Color = IndexedColors.DarkYellow.Index;
+                    font.Color = 8;
                     break;
                 case 3:
-                    font.Color = IndexedColors.Black.Index;
+                    font.Color = 13;
+                    break;
+                case 4:
+                    font.Color = 14;
                     break;
             }
             font.FontHeightInPoints = 11;
@@ -352,25 +432,10 @@ namespace FuturesModuleExportTool
             style.Alignment = HorizontalAlignment.Center;
             style.WrapText = false;
             IFont font = workbook.CreateFont();
-            font.Color = IndexedColors.Red.Index;
+            font.Color = 9;
             font.FontHeightInPoints = 11;
             font.FontName = "宋体";
             style.SetFont(font);
-            style.DataFormat = HSSFDataFormat.GetBuiltinFormat("0");
-            return style;
-        }
-
-
-        private ICellStyle createLossStyle(HSSFWorkbook workbook)
-        {
-            ICellStyle style = workbook.CreateCellStyle();
-            style.Alignment = HorizontalAlignment.Center;
-            style.WrapText = false;
-            IFont font = workbook.CreateFont();
-            font.FontHeightInPoints = 11;
-            font.FontName = "宋体";
-            style.SetFont(font);
-            font.Color = IndexedColors.Green.Index;
             style.DataFormat = HSSFDataFormat.GetBuiltinFormat("0");
             return style;
         }
@@ -384,7 +449,7 @@ namespace FuturesModuleExportTool
             font.FontHeightInPoints = 11;
             font.FontName = "宋体";
             style.SetFont(font);
-            style.FillForegroundColor = IndexedColors.Yellow.Index;
+            style.FillForegroundColor = 11;
             style.FillPattern = FillPattern.SolidForeground;
             return style;
         }

@@ -9,7 +9,7 @@ namespace FuturesModuleExportTool
     {
         public static String getDate()
         {
-            return DateTime.Now.ToShortDateString();
+            return DateTime.Now.ToString("yyyy-MM-dd");
         }
 
         public static String getTimeMillisecond()
