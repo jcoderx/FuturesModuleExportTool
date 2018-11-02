@@ -124,21 +124,33 @@ namespace FuturesModuleExportTool
                 allPaths.Add(Utils.cutDirName(fileName));
             }
 
+            //记录模拟点击失败的客户端
+            List<string> mockFailClients = new List<string>();
             DialogChooseClient dialog = new DialogChooseClient(allPaths);
             if (dialog.ShowDialog() == DialogResult.OK)
             {
                 List<int> indexes = dialog.getSelectedIndexes();
                 foreach (int i in indexes)
                 {
-                    IntPtr treeViewHandle = getSysTreeView32Handle(wndHandles[i]);
-                    if (treeViewHandle == IntPtr.Zero)
-                    {
-                        logAppendTextLine("未找到分区。");
-                        continue;
-                    }
+                    //IntPtr treeViewHandle = getSysTreeView32Handle(wndHandles[i]);
+                    //if (treeViewHandle == IntPtr.Zero)
+                    //{
+                    //    logAppendTextLine("未找到分区。");
+                    //    continue;
+                    //}
 
                     logAppendTextLine("模拟点击分区，此过程比较耗时，请耐心等候...");
-                    SysTreeview32Utils.ClickTreeViewBaseNodes((IntPtr)treeViewHandle);
+                    //SysTreeview32Utils.ClickTreeViewBaseNodes((IntPtr)treeViewHandle);
+                    string clickTreeViewMsg;
+                    bool result = TreeViewUtils.clickTreeViewRootNode(wndHandles[i], out clickTreeViewMsg);
+                    if (!result)
+                    {
+                        mockFailClients.Add(allPaths[i]);
+                        if (clickTreeViewMsg != null)
+                        {
+                            logAppendTextLine(allPaths[i]+":模拟点击分区失败,原因："+clickTreeViewMsg);
+                        }
+                    }
                     //开始导出
                     logAppendTextLine(allPaths[i] + "开始查找分区...");
                     List<IntPtr> listViewHandles = getAllListViewHandle(wndHandles[i]);
@@ -154,7 +166,19 @@ namespace FuturesModuleExportTool
                     }
                     collectionData(listViewHandles, allPaths[i]);
                 }
+                if (mockFailClients.Count > 0)
+                {
+                    logAppendTextLine("重要：：：：：：：：：：：：：：：：");
+                    StringBuilder sb = new StringBuilder();
+                    foreach (string c in mockFailClients)
+                    {
+                        sb.Append(c).Append(",");
+                    }
+                    logAppendTextLine(sb.ToString()+"客户端模拟点击分区失败，可能数据有误，请单独重新导出！！！！");
+                }
+                this.TopMost = true;
                 MessageBox.Show("导出Excel完成！");
+                this.TopMost = false;
             }
         }
 
