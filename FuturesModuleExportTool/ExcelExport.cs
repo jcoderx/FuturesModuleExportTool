@@ -175,8 +175,9 @@ namespace FuturesModuleExportTool
                     //周期+模型
                     cell = (XSSFCell)row0.CreateCell(column);
                     string cycle = partitionData[j, 4];
+                    string agreement = partitionData[j, 2];
                     string model = partitionData[j, 5];
-                    setCycleModelCell(cell, cycle, model);
+                    setCycleModelCell(cell, cycle, agreement, model);
                     cell.CellStyle = style;
                     //当日盈亏，对应平仓盈亏
                     cell = (XSSFCell)row1.CreateCell(column);
@@ -502,7 +503,7 @@ namespace FuturesModuleExportTool
 
         //-----------------------------------------------------------------------
         //设置周期+模型，分钟=>分；小时=>H
-        private void setCycleModelCell(ICell cell, string cycle, string model)
+        private void setCycleModelCell(ICell cell, string cycle, string agreement, string model)
         {
             if (!string.IsNullOrEmpty(cycle))
             {
@@ -516,7 +517,22 @@ namespace FuturesModuleExportTool
                 }
                 //秒、日不变
             }
-            cell.SetCellValue(cycle + model);
+            if (!string.IsNullOrEmpty(agreement))
+            {
+                if (agreement.Contains("指数"))
+                {
+                    agreement = "";
+                }
+                else if (agreement.Contains("主连"))
+                {
+                    agreement = "连";
+                }
+                else
+                {
+                    agreement = "个";
+                }
+            }
+            cell.SetCellValue(cycle + agreement + model);
         }
 
         //持仓转换
