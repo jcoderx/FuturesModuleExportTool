@@ -276,7 +276,8 @@ namespace FuturesModuleExportTool
                             {
                                 if (string.IsNullOrEmpty(theoryHold))
                                 {
-                                    holdError = false;
+                                    //子账户持仓不为空，理论持仓为空
+                                    holdError = true;
                                 }
                                 else
                                 {
