@@ -520,7 +520,7 @@ namespace FuturesModuleExportTool
             }
             if (!string.IsNullOrEmpty(agreement))
             {
-                if (agreement.Contains("指数"))
+                if (agreement.Contains("指数")|| agreement.Contains("加权"))
                 {
                     agreement = "";
                 }
