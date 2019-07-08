@@ -7,6 +7,7 @@ namespace FuturesModuleExportTool
     public class WindowsApi
     {
         public const string CLASS_DIALOG = "#32770";//窗口类型
+        public const string CLASS_MENU = "#32768";//菜单类型
 
         public const uint PROCESS_VM_OPERATION = 0x0008;
         public const uint PROCESS_VM_READ = 0x0010;
@@ -17,6 +18,8 @@ namespace FuturesModuleExportTool
         public const uint MEM_RESERVE = 0x2000;
 
         public const uint PAGE_READWRITE = 4;
+
+        public const int WM_CLOSE = 0x10;
 
         [DllImport("user32.DLL")]
         public static extern int SendMessage(IntPtr hWnd, uint Msg, int wParam, int lParam);
@@ -55,5 +58,15 @@ namespace FuturesModuleExportTool
 
         [DllImport("user32.dll")]
         static public extern bool UpdateWindow(IntPtr hWnd);
+
+        //鼠标键盘操作
+        [DllImport("user32.dll")]
+        public extern static bool SetCursorPos(int x, int y);
+        [DllImport("user32.dll")]
+        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, uint dwExtraInfo);
+        [DllImport("user32.dll")]
+        public static extern byte MapVirtualKey(uint uCode, uint uMapType);
+        [DllImport("user32.dll")]
+        public extern static void mouse_event(MouseEventFlag mouseEventFlag, int incrementX, int incrementY, uint data, UIntPtr extraInfo);
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FuturesModuleExportTool.Job;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -16,6 +17,7 @@ namespace FuturesModuleExportTool
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new FormMain());
+            //Application.Run(new FormJobTimeAdd());
         }
     }
 }
